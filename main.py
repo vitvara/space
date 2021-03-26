@@ -3,11 +3,43 @@ from random import randint, random
 
 import tkinter as tk
 
-from gamelib import Sprite, GameApp, Text
+from gamelib import Sprite, GameApp, Text, EnemyGenerationStrategy
 
 from consts import *
 from elements import Ship, Bullet, Enemy
 from utils import random_edge_position, normalize_vector, direction_to_dxdy, vector_len, distance
+
+
+class StarEnemyGenerationStrategy(EnemyGenerationStrategy):
+    def generate(self, space_game, ship):
+        enemies = []
+
+        x = randint(100, CANVAS_WIDTH - 100)
+        y = randint(100, CANVAS_HEIGHT - 100)
+
+        while vector_len(x - self.ship.x, y - self.ship.y) < 200:
+            x = randint(100, CANVAS_WIDTH - 100)
+            y = randint(100, CANVAS_HEIGHT - 100)
+
+        for d in range(18):
+            dx, dy = direction_to_dxdy(d * 20)
+            enemy = Enemy(self, x, y, dx * ENEMY_BASE_SPEED,
+                          dy * ENEMY_BASE_SPEED)
+            enemies.append(enemy)
+
+        return enemies
+
+
+class EdgeEnemyGenerationStrategy(EnemyGenerationStrategy):
+    def generate(self, space_game, ship):
+        x, y = random_edge_position()
+        vx, vy = normalize_vector(self.ship.x - x, self.ship.y - y)
+
+        vx *= ENEMY_BASE_SPEED
+        vy *= ENEMY_BASE_SPEED
+
+        enemy = Enemy(self, x, y, vx, vy)
+        return [enemy]
 
 
 class SpaceGame(GameApp):
@@ -22,7 +54,10 @@ class SpaceGame(GameApp):
         self.score_wait = 0
         self.score_text = Text(self, '', 100, 20)
         self.update_score_text()
-
+        self.enemy_creation_strategies = [
+            (0.2, StarEnemyGenerationStrategy()),
+            (1.0, EdgeEnemyGenerationStrategy())
+        ]
         self.bomb_power = BOMB_FULL_POWER
         self.bomb_wait = 0
         self.bomb_power_text = Text(self, '', 700, 20)
@@ -32,6 +67,17 @@ class SpaceGame(GameApp):
 
         self.enemies = []
         self.bullets = []
+
+    def create_enemies(self):
+        p = random()
+
+        for prob, strategy in self.enemy_creation_strategies:
+            if p < prob:
+                enemies = strategy.generate(self, self.ship)
+                break
+
+        for e in enemies:
+            self.add_enemy(e)
 
     def add_enemy(self, enemy):
         self.enemies.append(enemy)
@@ -47,9 +93,9 @@ class SpaceGame(GameApp):
             self.bomb_power = 0
 
             self.bomb_canvas_id = self.canvas.create_oval(
-                self.ship.x - BOMB_RADIUS, 
+                self.ship.x - BOMB_RADIUS,
                 self.ship.y - BOMB_RADIUS,
-                self.ship.x + BOMB_RADIUS, 
+                self.ship.x + BOMB_RADIUS,
                 self.ship.y + BOMB_RADIUS
             )
 
@@ -96,7 +142,8 @@ class SpaceGame(GameApp):
 
         for d in range(18):
             dx, dy = direction_to_dxdy(d * 20)
-            enemy = Enemy(self, x, y, dx * ENEMY_BASE_SPEED, dy * ENEMY_BASE_SPEED)
+            enemy = Enemy(self, x, y, dx * ENEMY_BASE_SPEED,
+                          dy * ENEMY_BASE_SPEED)
             enemies.append(enemy)
 
         return enemies
@@ -138,7 +185,7 @@ class SpaceGame(GameApp):
 
     def process_collisions(self):
         self.process_bullet_enemy_collisions()
-        self.process_ship_enemy_collision()
+        # self.process_ship_enemy_collision()
 
     def update_and_filter_deleted(self, elements):
         new_list = []
@@ -180,7 +227,7 @@ class SpaceGame(GameApp):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Space Fighter")
- 
+
     # do not allow window resizing
     root.resizable(False, False)
     app = SpaceGame(root, CANVAS_WIDTH, CANVAS_HEIGHT, UPDATE_DELAY)
