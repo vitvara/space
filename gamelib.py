@@ -5,6 +5,15 @@ from abc import ABC, abstractmethod
 from utils import distance
 
 
+class KeyboardHandler:
+    def __init__(self, successor=None):
+        self.successor = successor
+
+    def handle(self, event):
+        if self.successor:
+            self.successor.handle(event)
+
+
 class EnemyGenerationStrategy(ABC):
     @abstractmethod
     def generate(self, space_game, ship):
@@ -141,6 +150,8 @@ class GameApp(ttk.Frame):
 
         self.grid(sticky="news")
         self.create_canvas()
+        self.key_pressed_handler = KeyboardHandler()
+        self.key_released_handler = KeyboardHandler()
 
         self.elements = []
         self.init_game()
@@ -149,6 +160,12 @@ class GameApp(ttk.Frame):
 
         self.parent.bind('<KeyPress>', self.on_key_pressed)
         self.parent.bind('<KeyRelease>', self.on_key_released)
+
+    def on_key_pressed(self, event):
+        self.key_pressed_handler.handle(event)
+
+    def on_key_released(self, event):
+        self.key_released_handler.handle(event)
 
     def create_canvas(self):
         self.canvas = tk.Canvas(self, borderwidth=0,
@@ -192,10 +209,4 @@ class GameApp(ttk.Frame):
         pass
 
     def post_update(self):
-        pass
-
-    def on_key_pressed(self, event):
-        pass
-
-    def on_key_released(self, event):
         pass
