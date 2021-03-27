@@ -134,31 +134,25 @@ class SpaceGame(GameApp):
     def bullet_count(self):
         return len(self.bullets)
 
-    def animate_bomb(self):
+    def animate_bomb(self, i):
         print(self.bomb_list)
-        self.canvas.delete(self.bomb_list[-1])
-        self.after(200, lambda: self.delete_bomb)
-        bomb = BOMB_RADIUS-i*50
+        if len(self.bomb_list) > 0:
+            self.canvas.delete(self.bomb_list[-1])
+            if i == 10:
+                return
+        bomb = 0+BOMB_RADIUS*(i*0.1)
         self.bomb_list.append(self.canvas.create_oval(
             self.ship.x - bomb,
             self.ship.y - bomb,
             self.ship.x + bomb,
-            self.ship.y + bomb
-        ))
+            self.ship.y + bomb, fill="#CCFFFF"))
+        self.after(50, lambda: self.animate_bomb(i+1))
 
     def bomb(self):
         if self.bomb_power.value == BOMB_FULL_POWER:
             self.bomb_power.value = 0
             self.bomb_list = []
-            for i in range(5):
-                bomb = BOMB_RADIUS-i*50
-                self.bomb_list.append(self.canvas.create_oval(
-                    self.ship.x - bomb,
-                    self.ship.y - bomb,
-                    self.ship.x + bomb,
-                    self.ship.y + bomb
-                ))
-
+            self.animate_bomb(0)
             for e in self.enemies:
                 if self.ship.distance_to(e) <= BOMB_RADIUS:
                     e.to_be_deleted = True
