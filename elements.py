@@ -4,8 +4,11 @@ from random import randint
 from gamelib import Sprite, GameApp, Text
 
 from consts import *
-
+from math import atan, degrees
 from utils import direction_to_dxdy, distance
+
+from PIL import Image,  ImageTk
+
 
 class FixedDirectionSprite(Sprite):
     def __init__(self, app, image_filename, x, y, vx, vy):
@@ -23,10 +26,20 @@ class FixedDirectionSprite(Sprite):
 
 class Bullet(FixedDirectionSprite):
     def __init__(self, app, x, y, vx, vy):
+        self.angle = degrees(atan(vy/vx))
         super().__init__(app, 'images/bullet1.png', x, y, vx, vy)
 
     def is_colliding_with_enemy(self, enemy):
         return self.is_within_distance(enemy, BULLET_ENEMY_HIT_RADIUS)
+
+    def init_canvas_object(self):
+        self.photo_image = Image.open(self.image_filename).convert("RGBA")
+        self.photo_image = self.photo_image.rotate(-self.angle)
+        self.photo_image = ImageTk.PhotoImage(image=self.photo_image)
+        self.canvas_object_id = self.canvas.create_image(
+            self.x,
+            self.y,
+            image=self.photo_image)
 
 
 class Enemy(FixedDirectionSprite):
@@ -45,7 +58,7 @@ class Ship(Sprite):
         self.is_turning_right = False
 
     def update(self):
-        dx,dy = direction_to_dxdy(self.direction)
+        dx, dy = direction_to_dxdy(self.direction)
 
         self.x += dx * SHIP_SPEED
         self.y += dy * SHIP_SPEED
@@ -82,9 +95,9 @@ class Ship(Sprite):
         if self.app.bullet_count() >= MAX_NUM_BULLETS:
             return
 
-        dx,dy = direction_to_dxdy(self.direction)
+        dx, dy = direction_to_dxdy(self.direction)
 
-        bullet = Bullet(self.app, self.x, self.y, dx * BULLET_BASE_SPEED, dy * BULLET_BASE_SPEED)
+        bullet = Bullet(self.app, self.x, self.y, dx *
+                        BULLET_BASE_SPEED, dy * BULLET_BASE_SPEED)
 
         self.app.add_bullet(bullet)
-

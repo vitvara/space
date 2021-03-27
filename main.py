@@ -21,7 +21,7 @@ class BombKeyPressedHandler(GameKeyboardHandler):
     def handle(self, event):
         if event.char.upper() == 'Z':
             self.game_app.bomb()
-        else:                                     #
+        else:
             super().handle(event)
 
 
@@ -125,8 +125,9 @@ class SpaceGame(GameApp):
         self.enemies.append(enemy)
 
     def add_bullet(self, bullet):
-        self.bomb_power.value -= 1
-        self.bullets.append(bullet)
+        if self.bomb_power.value > 0:
+            self.bomb_power.value -= 1
+            self.bullets.append(bullet)
 
     def bullet_count(self):
         return len(self.bullets)
