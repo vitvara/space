@@ -52,21 +52,37 @@ class Ship(Sprite):
         super().__init__(app, 'images/ship.png', x, y)
 
         self.app = app
-
+        self.angle = 0
         self.direction = 0
         self.is_turning_left = False
         self.is_turning_right = False
 
+    def init_canvas_object(self):
+        self.photo_image = Image.open(self.image_filename).convert("RGBA")
+        self.photo_image = ImageTk.PhotoImage(image=self.photo_image)
+        self.canvas_object_id = self.canvas.create_image(
+            self.x,
+            self.y,
+            image=self.photo_image)
+
     def update(self):
         dx, dy = direction_to_dxdy(self.direction)
-
         self.x += dx * SHIP_SPEED
         self.y += dy * SHIP_SPEED
-
         if self.is_turning_left:
             self.turn_left()
         elif self.is_turning_right:
             self.turn_right()
+
+    def update_ship(self):
+        self.canvas.delete(self.canvas_object_id)
+        self.photo_image = Image.open(self.image_filename).convert("RGBA")
+        self.photo_image = ImageTk.PhotoImage(
+            self.photo_image.rotate(self.angle))
+        self.canvas_object_id = self.canvas.create_image(
+            self.x,
+            self.y,
+            image=self.photo_image)
 
     def start_turn(self, dir):
         if dir.upper() == 'LEFT':
@@ -83,9 +99,13 @@ class Ship(Sprite):
             self.is_turning_right = False
 
     def turn_left(self):
+        self.angle += SHIP_TURN_ANGLE
+        self.update_ship()
         self.direction -= SHIP_TURN_ANGLE
 
     def turn_right(self):
+        self.angle -= SHIP_TURN_ANGLE
+        self.update_ship()
         self.direction += SHIP_TURN_ANGLE
 
     def is_colliding_with_enemy(self, enemy):

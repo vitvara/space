@@ -144,7 +144,8 @@ class Text(GameCanvasElement):
 
     def set_text(self, text):
         self.text = text
-        self.canvas.itemconfigure(self.canvas_object_id, text=text)
+        self.canvas.itemconfigure(
+            self.canvas_object_id, text=text, fill="white")
 
 
 class Sprite(GameCanvasElement):

@@ -79,6 +79,8 @@ class EdgeEnemyGenerationStrategy(EnemyGenerationStrategy):
 
 class SpaceGame(GameApp):
     def init_game(self):
+        self.background = Sprite(
+            self, "images/background.png", CANVAS_WIDTH//2, CANVAS_HEIGHT//2)
         self.ship = Ship(self, CANVAS_WIDTH // 2, CANVAS_HEIGHT // 2)
 
         self.level = StatusWithText(
@@ -132,18 +134,30 @@ class SpaceGame(GameApp):
     def bullet_count(self):
         return len(self.bullets)
 
+    def animate_bomb(self):
+        print(self.bomb_list)
+        self.canvas.delete(self.bomb_list[-1])
+        self.after(200, lambda: self.delete_bomb)
+        bomb = BOMB_RADIUS-i*50
+        self.bomb_list.append(self.canvas.create_oval(
+            self.ship.x - bomb,
+            self.ship.y - bomb,
+            self.ship.x + bomb,
+            self.ship.y + bomb
+        ))
+
     def bomb(self):
         if self.bomb_power.value == BOMB_FULL_POWER:
             self.bomb_power.value = 0
-
-            self.bomb_canvas_id = self.canvas.create_oval(
-                self.ship.x - BOMB_RADIUS,
-                self.ship.y - BOMB_RADIUS,
-                self.ship.x + BOMB_RADIUS,
-                self.ship.y + BOMB_RADIUS
-            )
-
-            self.after(200, lambda: self.canvas.delete(self.bomb_canvas_id))
+            self.bomb_list = []
+            for i in range(5):
+                bomb = BOMB_RADIUS-i*50
+                self.bomb_list.append(self.canvas.create_oval(
+                    self.ship.x - bomb,
+                    self.ship.y - bomb,
+                    self.ship.x + bomb,
+                    self.ship.y + bomb
+                ))
 
             for e in self.enemies:
                 if self.ship.distance_to(e) <= BOMB_RADIUS:
@@ -227,7 +241,7 @@ class SpaceGame(GameApp):
 
     def process_collisions(self):
         self.process_bullet_enemy_collisions()
-        # self.process_ship_enemy_collision()
+        self.process_ship_enemy_collision()
 
     def update_and_filter_deleted(self, elements):
         new_list = []
