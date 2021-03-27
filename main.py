@@ -135,7 +135,6 @@ class SpaceGame(GameApp):
         return len(self.bullets)
 
     def animate_bomb(self, i):
-        print(self.bomb_list)
         if len(self.bomb_list) > 0:
             self.canvas.delete(self.bomb_list[-1])
             if i == 10:
@@ -156,14 +155,6 @@ class SpaceGame(GameApp):
             for e in self.enemies:
                 if self.ship.distance_to(e) <= BOMB_RADIUS:
                     e.to_be_deleted = True
-
-            # self.update_bomb_power_text()
-
-    # def update_score_text(self):
-    #     self.score_text.set_text('Score: %d' % self.score.value)
-
-    # def update_bomb_power_text(self):
-    #     self.bomb_power_text.set_text('Power: %d' % self.bomb_power.value)
 
     def update_level_text(self):
         self.level.value += 1
