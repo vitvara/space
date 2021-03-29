@@ -101,9 +101,9 @@ class SpaceGame(GameApp):
         self.score_wait = 0
         self.score = StatusWithText(self, 100, 20, 'Score: %d', 0)
         self.enemy_creation_strategies = [
-            (0.09, TieFighterEnemyGeration()),
-            (0.03, StarEnemyGenerationStrategy()),
-            (0.8, EdgeEnemyGenerationStrategy())
+            [0.09, TieFighterEnemyGeration()],
+            [0.03, StarEnemyGenerationStrategy()],
+            [0.8, EdgeEnemyGenerationStrategy()]
         ]
         self.bomb_power = StatusWithText(
             self, CANVAS_WIDTH-100, 20, 'power: %d', BOMB_FULL_POWER)
@@ -126,15 +126,31 @@ class SpaceGame(GameApp):
         key_released_handler = ShipMovementKeyReleasedHandler(self, self.ship)
         self.key_released_handler = key_released_handler
 
+    def level_stage(self):
+        if self.score.value == 300:
+            self.level.value = 5
+            self.enemy_creation_strategies[0][0] = 1
+            self.enemy_creation_strategies[1][0] = 0
+            self.enemy_creation_strategies[2][0] = 0
+        elif self.score.value == 200:
+            self.level.value = 4
+            self.enemy_creation_strategies[1][0] = 0.05
+        elif self.score.value == 100:
+            self.level.value = 3
+            self.enemy_creation_strategies[0][0] = 0.15
+        elif self.score.value == 50:
+            self.level.value = 2
+            self.score.value == 250
+            self.enemy_creation_strategies[2][0] = 1
+
     def create_enemies(self):
         p = random()
-
+        print(self.enemy_creation_strategies)
         for prob, strategy in self.enemy_creation_strategies:
             if p < prob:
                 enemies = strategy.generate(self, self.ship)
                 for e in enemies:
                     self.add_enemy(e)
-                break
 
     def add_enemy(self, enemy):
         self.enemies.append(enemy)
@@ -227,7 +243,7 @@ class SpaceGame(GameApp):
 
     def process_collisions(self):
         self.process_bullet_enemy_collisions()
-        self.process_ship_enemy_collision()
+        # self.process_ship_enemy_collision()
 
     def ship_got_hit(self, size):
         explode = Explode(self, self.ship.x, self.ship.y, size)
@@ -246,7 +262,7 @@ class SpaceGame(GameApp):
 
     def post_update(self):
         self.process_collisions()
-
+        self.level_stage()
         self.bullets = self.update_and_filter_deleted(self.bullets)
         self.enemies = self.update_and_filter_deleted(self.enemies)
 
