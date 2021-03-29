@@ -4,7 +4,7 @@ from random import randint
 from gamelib import Sprite, GameApp, Text
 
 from consts import *
-from math import atan, degrees
+from math import atan, degrees, asin, cos, sin
 from utils import direction_to_dxdy, distance
 
 from PIL import Image,  ImageTk
@@ -59,7 +59,8 @@ class Ship(Sprite):
 
     def init_canvas_object(self):
         self.photo_image = Image.open(self.image_filename).convert("RGBA")
-        self.photo_image = ImageTk.PhotoImage(image=self.photo_image)
+        self.photo_image = ImageTk.PhotoImage(
+            image=self.photo_image)
         self.canvas_object_id = self.canvas.create_image(
             self.x,
             self.y,
@@ -116,8 +117,6 @@ class Ship(Sprite):
             return
 
         dx, dy = direction_to_dxdy(self.direction)
-
-        bullet = Bullet(self.app, self.x, self.y, dx *
-                        BULLET_BASE_SPEED, dy * BULLET_BASE_SPEED)
-
-        self.app.add_bullet(bullet)
+        bullet0 = Bullet(self.app, self.x, self.y, dx *
+                         BULLET_BASE_SPEED, dy * BULLET_BASE_SPEED)
+        self.app.add_bullet(bullet0)
