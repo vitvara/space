@@ -167,9 +167,12 @@ class SpaceGame(GameApp):
             self.animate_bomb(0)
             for e in self.enemies:
                 if self.ship.distance_to(e) <= BOMB_RADIUS:
-
-                    explode = Explode(self, e.x, e.y, 50)
-                    explode.update()
+                    if isinstance(e, TieFighter):
+                        explode = Explode(self, e.x, e.y, 200)
+                        explode.update()
+                    else:
+                        explode = Explode(self, e.x, e.y, 50)
+                        explode.update()
                     self.score.value += 1
                     e.to_be_deleted = True
 
