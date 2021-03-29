@@ -19,7 +19,6 @@ class FixedDirectionSprite(Sprite):
     def update(self):
         self.x += self.vx
         self.y += self.vy
-
         if (self.x < 0) or (self.y < 0) or (self.x > CANVAS_WIDTH) or (self.y > CANVAS_HEIGHT):
             self.to_be_deleted = True
 
@@ -42,9 +41,56 @@ class Bullet(FixedDirectionSprite):
             image=self.photo_image)
 
 
+class TieBullet(FixedDirectionSprite):
+    def __init__(self, app, x, y, vx, vy):
+        self.angle = degrees(atan(vy/vx))
+        super().__init__(app, 'images/bullet2.png', x, y, vx, vy)
+
+    def is_colliding_with_ship(self, tie):
+        return self.is_within_distance(tie, SHIP_ENEMY_HIT_RADIUS)
+
+    def init_canvas_object(self):
+        self.photo_image = Image.open(self.image_filename).convert("RGBA")
+        self.photo_image = self.photo_image.rotate(-self.angle)
+        self.photo_image = ImageTk.PhotoImage(image=self.photo_image)
+        self.canvas_object_id = self.canvas.create_image(
+            self.x,
+            self.y,
+            image=self.photo_image)
+
+
 class Enemy(FixedDirectionSprite):
     def __init__(self, app, x, y, vx, vy):
         super().__init__(app, 'images/enemy1.png', x, y, vx, vy)
+
+
+class TieFighter(FixedDirectionSprite):
+    def __init__(self, app, x, y, vx, vy):
+        self.angle = -degrees(atan(vy/vx))
+        self.app = app
+        if vx < 0:
+            self.angle = -degrees(atan(vy/vx)) + 180
+        super().__init__(app, "images/tie.png", x, y, vx, vy)
+
+    def init_canvas_object(self):
+        self.photo_image = Image.open(self.image_filename).convert("RGBA")
+        self.photo_image = ImageTk.PhotoImage(
+            image=self.photo_image.rotate(self.angle))
+        self.canvas_object_id = self.canvas.create_image(
+            self.x,
+            self.y,
+            image=self.photo_image)
+        self.app.after(500, self.fire)
+        self.app.after(900, self.fire)
+
+    def fire(self):
+        if self.app.bullet_count() >= MAX_NUM_BULLETS:
+            return
+
+        dx, dy = direction_to_dxdy(-self.angle)
+        bullet0 = TieBullet(self.app, self.x, self.y, dx *
+                            BULLET_BASE_SPEED, dy * BULLET_BASE_SPEED)
+        self.app.add_enemy(bullet0)
 
 
 class Ship(Sprite):
