@@ -6,7 +6,7 @@ import tkinter as tk
 from gamelib import Sprite, GameApp, Text, EnemyGenerationStrategy, KeyboardHandler, StatusWithText
 from PIL import Image, ImageTk
 from consts import *
-from elements import Ship, Bullet, Enemy, TieFighter
+from elements import Ship, Bullet, Enemy, TieFighter, Explode
 from utils import random_edge_position, normalize_vector, direction_to_dxdy, vector_len, distance
 
 
@@ -109,7 +109,8 @@ class SpaceGame(GameApp):
             self, CANVAS_WIDTH-100, 20, 'power: %d', BOMB_FULL_POWER)
         self.bomb_wait = 0
         self.bomb_power_text = Text(self, '', 700, 20)
-
+        self.health = StatusWithText(
+            self, 700, CANVAS_WIDTH-CANVAS_WIDTH*0.3, 'health: %d', 4)
         self.elements.append(self.ship)
 
         self.enemies = []
@@ -166,6 +167,9 @@ class SpaceGame(GameApp):
             self.animate_bomb(0)
             for e in self.enemies:
                 if self.ship.distance_to(e) <= BOMB_RADIUS:
+
+                    explode = Explode(self, e.x, e.y, 50)
+                    explode.update()
                     self.score.value += 1
                     e.to_be_deleted = True
 
@@ -177,6 +181,9 @@ class SpaceGame(GameApp):
         if self.score_wait >= SCORE_WAIT:
             self.score.value += 1
             self.score_wait = 0
+
+    def update_health(self):
+        self.health_wait += 1
 
     def update_bomb_power(self):
         self.bomb_wait += 1
@@ -192,18 +199,36 @@ class SpaceGame(GameApp):
         for b in self.bullets:
             for e in self.enemies:
                 if b.is_colliding_with_enemy(e):
+                    if isinstance(e, TieFighter):
+                        explode = Explode(self, e.x, e.y, 200)
+                        explode.update()
+                    else:
+                        explode = Explode(self, e.x, e.y, 50)
+                        explode.update()
                     self.score.value += 1
                     b.to_be_deleted = True
                     e.to_be_deleted = True
 
     def process_ship_enemy_collision(self):
         for e in self.enemies:
+
             if self.ship.is_colliding_with_enemy(e):
-                self.stop_animation()
+                self.health.value -= 1
+                self.ship_got_hit(50)
+                e.to_be_deleted = True
+                if self.health.value == 0 or isinstance(e, TieFighter):
+                    self.health.value = 0
+                    self.ship_got_hit(200)
+                    self.ship.delete()
+                    self.stop_animation()
 
     def process_collisions(self):
         self.process_bullet_enemy_collisions()
         self.process_ship_enemy_collision()
+
+    def ship_got_hit(self, size):
+        explode = Explode(self, self.ship.x, self.ship.y, size)
+        explode.update()
 
     def update_and_filter_deleted(self, elements):
         new_list = []
