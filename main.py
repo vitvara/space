@@ -6,7 +6,7 @@ import tkinter as tk
 from gamelib import Sprite, GameApp, Text, EnemyGenerationStrategy, KeyboardHandler, StatusWithText
 from PIL import Image, ImageTk
 from consts import *
-from elements import Ship, Bullet, Enemy
+from elements import Ship, Bullet, Enemy, TieFighter
 from utils import random_edge_position, normalize_vector, direction_to_dxdy, vector_len, distance
 
 
@@ -67,7 +67,14 @@ class StarEnemyGenerationStrategy(EnemyGenerationStrategy):
 
 class TieFighterEnemyGeration(EnemyGenerationStrategy):
     def generate(self, space_game, ship):
-        pass
+        x, y = random_edge_position()
+        vx, vy = normalize_vector(ship.x - x, ship.y - y)
+
+        vx *= ENEMY_BASE_SPEED
+        vy *= ENEMY_BASE_SPEED
+
+        enemy = TieFighter(space_game, x, y, vx, vy)
+        return [enemy]
 
 
 class EdgeEnemyGenerationStrategy(EnemyGenerationStrategy):
@@ -94,8 +101,9 @@ class SpaceGame(GameApp):
         self.score_wait = 0
         self.score = StatusWithText(self, 100, 20, 'Score: %d', 0)
         self.enemy_creation_strategies = [
+            (0.09, TieFighterEnemyGeration()),
             (0.03, StarEnemyGenerationStrategy()),
-            (0.5, EdgeEnemyGenerationStrategy())
+            (0.8, EdgeEnemyGenerationStrategy())
         ]
         self.bomb_power = StatusWithText(
             self, CANVAS_WIDTH-100, 20, 'power: %d', BOMB_FULL_POWER)
@@ -158,6 +166,7 @@ class SpaceGame(GameApp):
             self.animate_bomb(0)
             for e in self.enemies:
                 if self.ship.distance_to(e) <= BOMB_RADIUS:
+                    self.score.value += 1
                     e.to_be_deleted = True
 
     def update_level_text(self):
@@ -183,6 +192,7 @@ class SpaceGame(GameApp):
         for b in self.bullets:
             for e in self.enemies:
                 if b.is_colliding_with_enemy(e):
+                    self.score.value += 1
                     b.to_be_deleted = True
                     e.to_be_deleted = True
 
@@ -193,7 +203,7 @@ class SpaceGame(GameApp):
 
     def process_collisions(self):
         self.process_bullet_enemy_collisions()
-        # self.process_ship_enemy_collision()
+        self.process_ship_enemy_collision()
 
     def update_and_filter_deleted(self, elements):
         new_list = []
