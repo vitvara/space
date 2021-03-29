@@ -93,6 +93,38 @@ class TieFighter(FixedDirectionSprite):
         self.app.add_enemy(bullet0)
 
 
+class Explode(Sprite):
+    def __init__(self, app, x, y, size):
+        super().__init__(app, 'images/explode/1.png', x, y)
+        self.app = app
+        self.file_name = ["2,3,4,5,6"]
+        self.size = size
+
+    def init_canvas_object(self):
+        self.photo_image = Image.open(self.image_filename).convert("RGBA")
+        self.photo_image = ImageTk.PhotoImage(
+            image=self.photo_image)
+        self.canvas_object_id = self.canvas.create_image(
+            self.x,
+            self.y,
+            image=self.photo_image)
+
+    def update(self, image_name=1):
+        if image_name > 6:
+            self.app.canvas.delete(self.canvas_object_id)
+            return
+        full_image_name = "images/explode/" + str(image_name) + ".png"
+        self.canvas.delete(self.canvas_object_id)
+        self.photo_image = Image.open(full_image_name).convert("RGBA")
+        self.photo_image = ImageTk.PhotoImage(
+            self.photo_image.resize((self.size, self.size)))
+        self.canvas_object_id = self.canvas.create_image(
+            self.x,
+            self.y,
+            image=self.photo_image)
+        self.app.after(50, lambda: self.update(image_name+1))
+
+
 class Ship(Sprite):
     def __init__(self, app, x, y):
         super().__init__(app, 'images/ship.png', x, y)
