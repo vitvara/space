@@ -6,7 +6,7 @@ import tkinter as tk
 from gamelib import Sprite, GameApp, Text, EnemyGenerationStrategy, KeyboardHandler, StatusWithText
 from PIL import Image, ImageTk
 from consts import *
-from elements import Ship, Bullet, Enemy, TieFighter, Explode
+from elements import Ship, Bullet, Enemy, TieFighter, Explode, DeathStar
 from utils import random_edge_position, normalize_vector, direction_to_dxdy, vector_len, distance
 
 
@@ -27,7 +27,9 @@ class BombKeyPressedHandler(GameKeyboardHandler):
 
 class ShipMovementKeyPressedHandler(GameKeyboardHandler):
     def handle(self, event):
-        if event.keysym == 'Left':
+        if event.keysym.upper() == "X":
+            self.ship.turbo = True
+        elif event.keysym == 'Left':
             self.ship.start_turn('LEFT')
         elif event.keysym == 'Right':
             self.ship.start_turn('RIGHT')
@@ -39,7 +41,9 @@ class ShipMovementKeyPressedHandler(GameKeyboardHandler):
 
 class ShipMovementKeyReleasedHandler(GameKeyboardHandler):
     def handle(self, event):
-        if event.keysym == 'Left':
+        if event.keysym.upper() == "X":
+            self.ship.turbo = False
+        elif event.keysym == 'Left':
             self.ship.stop_turn('LEFT')
         elif event.keysym == 'Right':
             self.ship.stop_turn('RIGHT')
@@ -112,7 +116,8 @@ class SpaceGame(GameApp):
         self.health = StatusWithText(
             self, 700, CANVAS_WIDTH-CANVAS_WIDTH*0.3, 'health: %d', 4)
         self.elements.append(self.ship)
-
+        self.boss = None
+        self.turbo_power()
         self.enemies = []
         self.bullets = []
         self.init_key_handlers()
@@ -126,26 +131,42 @@ class SpaceGame(GameApp):
         key_released_handler = ShipMovementKeyReleasedHandler(self, self.ship)
         self.key_released_handler = key_released_handler
 
+    def deathstar_fire(self, delay=0):
+
+        if self.boss.in_screen:
+            self.boss.start_fire_dir_ship(self.ship.x, self.ship.y)
+        if delay <= 200:
+            self.after(100, lambda: self.deathstar_fire(delay+1))
+        else:
+            delay = 0
+            self.after(5000, lambda: self.deathstar_fire(delay))
+
     def level_stage(self):
-        if self.score.value == 300:
+        if self.score.value >= 400 and self.boss == None:
+            self.enemy_creation_strategies[0][0] = 0.1
+            self.enemy_creation_strategies[1][0] = 0
+            self.enemy_creation_strategies[2][0] = 0
+            self.boss = DeathStar(self)
+            self.boss.come_in()
+            self.deathstar_fire()
+        if self.score.value >= 300:
             self.level.value = 5
             self.enemy_creation_strategies[0][0] = 1
             self.enemy_creation_strategies[1][0] = 0
             self.enemy_creation_strategies[2][0] = 0
-        elif self.score.value == 200:
+        elif self.score.value >= 200:
             self.level.value = 4
             self.enemy_creation_strategies[1][0] = 0.05
-        elif self.score.value == 100:
+        elif self.score.value >= 100:
             self.level.value = 3
             self.enemy_creation_strategies[0][0] = 0.15
-        elif self.score.value == 50:
+        elif self.score.value >= 10:
             self.level.value = 2
-            self.score.value == 250
+            self.score.value = 390
             self.enemy_creation_strategies[2][0] = 1
 
     def create_enemies(self):
         p = random()
-        print(self.enemy_creation_strategies)
         for prob, strategy in self.enemy_creation_strategies:
             if p < prob:
                 enemies = strategy.generate(self, self.ship)
@@ -214,6 +235,13 @@ class SpaceGame(GameApp):
         if random() < 0.1:
             self.create_enemies()
 
+    def turbo_power(self):
+        if self.bomb_power.value < 10:
+            self.ship.turbo = False
+        if self.ship.turbo == True and self.bomb_power.value > 0:
+            self.bomb_power.value -= 1
+        self.after(50, self.turbo_power)
+
     def process_bullet_enemy_collisions(self):
         for b in self.bullets:
             for e in self.enemies:
@@ -243,7 +271,7 @@ class SpaceGame(GameApp):
 
     def process_collisions(self):
         self.process_bullet_enemy_collisions()
-        # self.process_ship_enemy_collision()
+        self.process_ship_enemy_collision()
 
     def ship_got_hit(self, size):
         explode = Explode(self, self.ship.x, self.ship.y, size)
