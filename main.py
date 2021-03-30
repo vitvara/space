@@ -143,9 +143,6 @@ class SpaceGame(GameApp):
 
     def level_stage(self):
         if self.score.value >= 400 and self.boss == None:
-            self.enemy_creation_strategies[0][0] = 0.1
-            self.enemy_creation_strategies[1][0] = 0
-            self.enemy_creation_strategies[2][0] = 0
             self.boss = DeathStar(self)
             self.boss.come_in()
             self.deathstar_fire()
@@ -162,7 +159,6 @@ class SpaceGame(GameApp):
             self.enemy_creation_strategies[0][0] = 0.15
         elif self.score.value >= 10:
             self.level.value = 2
-            self.score.value = 390
             self.enemy_creation_strategies[2][0] = 1
 
     def create_enemies(self):
